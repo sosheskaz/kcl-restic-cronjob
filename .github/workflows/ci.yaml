@@ -1,0 +1,13 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  kcl-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker://kcllang/kcl
+        with:
+          args: kcl lint .
