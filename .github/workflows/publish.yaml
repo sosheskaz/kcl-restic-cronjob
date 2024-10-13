@@ -1,0 +1,31 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      KPM_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install KCL
+        run: |
+          set -euo pipefail
+
+          mkdir -p /opt/kcl
+          wget -O- https://github.com/kcl-lang/cli/releases/download/v0.10.0/kcl-v0.10.0-linux-amd64.tar.gz | tar -C /opt/kcl -xzf -
+          ln -s /opt/kcl/kcl /usr/local/bin/kcl
+
+      - name: Registry login
+        run: kcl registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
+
+      - name: Publish
+        run: kcl mod push
