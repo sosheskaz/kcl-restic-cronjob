@@ -1,0 +1,75 @@
+---
+name: nextcloud-backup
+namespace: nextcloud
+cronjob:
+  schedule: "46 2 * * *"
+  timezone: "America/Chicago"
+extra_labels:
+  app: nextcloud
+  component: backup
+restic:
+  repo: rest:https://my-backup-server/my-path
+  host: 'nextcloud'
+
+  # This must be populated externally
+  repo_pass_secret: nextcloud-restic
+
+  keep_daily: 7
+  keep_weekly: 5
+  keep_monthly: 12
+volumes:
+  # We can use an emptyDir volume to store database backups ephemerally
+  - name: nextcloud-db-tmp
+    emptyDir: {}
+  # These must be populated externally, and should probably resemble those on your Nextcloud deployment
+  - name: nextcloud-config
+    persistentVolumeClaim:
+      claimName: nextcloud-config
+  - name: nextcloud-data
+    persistentVolumeClaim:
+      claimName: nextcloud-data
+  - name: nextcloud-custom-apps
+    persistentVolumeClaim:
+      claimName: nextcloud-custom-apps
+volume_mounts:
+  - name: nextcloud-db-tmp
+    mountPath: /backup/db
+  - name: nextcloud-config
+    mountPath: /backup/config
+    readOnly: true
+  - name: nextcloud-data
+    mountPath: /backup/data
+    readOnly: true
+  - name: nextcloud-custom-apps
+    mountPath: /backup/custom_apps
+    readOnly: true
+node_selector:
+  my_node_selector: my_node_selector_value
+pre_backup_hooks:
+  - args:
+      - occ
+      - maintenance:mode
+      - --on
+    envFrom: &env_from
+      # must be populated externally
+      - secretRef:
+          name: nextcloud-app-secrets
+    # this should probably mirror your nextcloud deployment
+    image: &nc ghcr.io/linuxserver/nextcloud
+    name: nextcloud-maint-on
+    volumeMounts: &mounts
+      - mountPath: /config
+        name: nextcloud-config
+      - mountPath: /data
+        name: nextcloud-data
+      - mountPath: /app/www/public/custom_apps
+        name: nextcloud-custom-apps
+post_backup_hooks:
+  - name: nextcloud-maint-off
+    args:
+      - occ
+      - maintenance:mode
+      - --off
+    envFrom: *env_from
+    image: *nc
+    volumeMounts: *mounts

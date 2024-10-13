@@ -1,0 +1,28 @@
+---
+name: minimal-backup
+namespace: system-backup
+cronjob:
+  schedule: "14 1 * * *"
+  timezone: "America/Chicago"
+restic:
+  repo: rest:https://my-backup-server/my-path
+
+  # This must be populated externally
+  repo_pass_secret: minimal-restic
+
+  one_file_system: true
+
+  keep_daily: 7
+  keep_weekly: 5
+  keep_monthly: 12
+volumes:
+  - name: host
+    hostPath:
+      path: /
+      type: Directory
+volume_mounts:
+  - name: host
+    mountPath: /host
+    readOnly: true
+node_selector:
+  my_node_selector: my_node_selector_value

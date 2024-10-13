@@ -1,0 +1,213 @@
+apiVersion: v1
+data:
+  RESTIC_REPOSITORY: rest:https://my-backup-server/my-path
+  RESTIC_HOST: nextcloud
+  RESTIC_PASSWORD_FILE: /secret/repo-password
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: nextcloud-backup
+    app.kubernetes.io/component: restic
+    app: nextcloud
+    component: backup
+  name: nextcloud-backup-env
+  namespace: nextcloud
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app.kubernetes.io/name: nextcloud-backup
+    app.kubernetes.io/component: restic
+    app: nextcloud
+    component: backup
+  name: nextcloud-backup-restic-cache
+  namespace: nextcloud
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: '5Gi'
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  labels:
+    app.kubernetes.io/name: nextcloud-backup
+    app.kubernetes.io/component: restic
+    app: nextcloud
+    component: backup
+  name: nextcloud-backup-restic
+  namespace: nextcloud
+spec:
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: nextcloud-backup
+            app.kubernetes.io/component: restic
+            app: nextcloud
+            component: backup
+        spec:
+          containers:
+          - args:
+            - '--cache-dir=/cache'
+            - prune
+            envFrom:
+            - configMapRef:
+                name: nextcloud-backup-env
+            image: docker.io/restic/restic:latest
+            name: '5-restic-prune'
+            volumeMounts:
+            - mountPath: /cache
+              name: cache
+            - mountPath: /secret
+              name: secret
+            - mountPath: /backup/db
+              name: nextcloud-db-tmp
+            - mountPath: /backup/config
+              name: nextcloud-config
+              readOnly: true
+            - mountPath: /backup/data
+              name: nextcloud-data
+              readOnly: true
+            - mountPath: /backup/custom_apps
+              name: nextcloud-custom-apps
+              readOnly: true
+          initContainers:
+          - args:
+            - '--cache-dir=/cache'
+            - check
+            envFrom:
+            - configMapRef:
+                name: nextcloud-backup-env
+            image: docker.io/restic/restic:latest
+            name: '0-restic-check'
+            volumeMounts:
+            - mountPath: /cache
+              name: cache
+            - mountPath: /secret
+              name: secret
+            - mountPath: /backup/db
+              name: nextcloud-db-tmp
+            - mountPath: /backup/config
+              name: nextcloud-config
+              readOnly: true
+            - mountPath: /backup/data
+              name: nextcloud-data
+              readOnly: true
+            - mountPath: /backup/custom_apps
+              name: nextcloud-custom-apps
+              readOnly: true
+          - args:
+            - occ
+            - maintenance:mode
+            - '--on'
+            envFrom:
+            - secretRef:
+                name: nextcloud-app-secrets
+            image: ghcr.io/linuxserver/nextcloud
+            name: '1-nextcloud-maint-on'
+            volumeMounts:
+            - mountPath: /config
+              name: nextcloud-config
+            - mountPath: /data
+              name: nextcloud-data
+            - mountPath: /app/www/public/custom_apps
+              name: nextcloud-custom-apps
+          - args:
+            - '--cache-dir=/cache'
+            - backup
+            - '--no-scan'
+            - /backup
+            envFrom:
+            - configMapRef:
+                name: nextcloud-backup-env
+            image: docker.io/restic/restic:latest
+            name: '2-restic-backup'
+            volumeMounts:
+            - mountPath: /cache
+              name: cache
+            - mountPath: /secret
+              name: secret
+            - mountPath: /backup/db
+              name: nextcloud-db-tmp
+            - mountPath: /backup/config
+              name: nextcloud-config
+              readOnly: true
+            - mountPath: /backup/data
+              name: nextcloud-data
+              readOnly: true
+            - mountPath: /backup/custom_apps
+              name: nextcloud-custom-apps
+              readOnly: true
+          - args:
+            - occ
+            - maintenance:mode
+            - '--off'
+            envFrom:
+            - secretRef:
+                name: nextcloud-app-secrets
+            image: ghcr.io/linuxserver/nextcloud
+            name: '3-nextcloud-maint-off'
+            volumeMounts:
+            - mountPath: /config
+              name: nextcloud-config
+            - mountPath: /data
+              name: nextcloud-data
+            - mountPath: /app/www/public/custom_apps
+              name: nextcloud-custom-apps
+          - args:
+            - '--cache-dir=/cache'
+            - forget
+            - '--keep-daily=7'
+            - '--keep-weekly=5'
+            - '--keep-monthly=12'
+            envFrom:
+            - configMapRef:
+                name: nextcloud-backup-env
+            image: docker.io/restic/restic:latest
+            name: '4-restic-forget'
+            volumeMounts:
+            - mountPath: /cache
+              name: cache
+            - mountPath: /secret
+              name: secret
+            - mountPath: /backup/db
+              name: nextcloud-db-tmp
+            - mountPath: /backup/config
+              name: nextcloud-config
+              readOnly: true
+            - mountPath: /backup/data
+              name: nextcloud-data
+              readOnly: true
+            - mountPath: /backup/custom_apps
+              name: nextcloud-custom-apps
+              readOnly: true
+          nodeSelector:
+            my_node_selector: my_node_selector_value
+          restartPolicy: Never
+          volumes:
+          - name: cache
+            persistentVolumeClaim:
+              claimName: nextcloud-backup-restic-cache
+          - name: secret
+            secret:
+              optional: true
+              secretName: nextcloud-restic
+          - emptyDir: {}
+            name: nextcloud-db-tmp
+          - name: nextcloud-config
+            persistentVolumeClaim:
+              claimName: nextcloud-config
+          - name: nextcloud-data
+            persistentVolumeClaim:
+              claimName: nextcloud-data
+          - name: nextcloud-custom-apps
+            persistentVolumeClaim:
+              claimName: nextcloud-custom-apps
+  schedule: '46 2 * * *'
+  timeZone: America/Chicago
