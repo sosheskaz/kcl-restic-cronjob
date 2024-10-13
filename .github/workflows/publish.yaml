@@ -1,0 +1,19 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: KCL Publish
+        uses: docker://kcllang/kcl
+        env:
+          KPM_REPO: ${{ github.repository }}
+        with:
+          command: /bin/bash
+          args: -c 'kcl registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io && kcl mod push'
