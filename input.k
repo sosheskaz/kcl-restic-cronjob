@@ -85,7 +85,7 @@ schema ResticOptions:
     keep_weekly?: int
     keep_monthly?: int
     keep_yearly?: int
+    group_by?: str
     # This can be handy for safety
     forget_dry_run: bool = False
     extra_forget_args: [str] = []
-
