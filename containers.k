@@ -61,6 +61,8 @@ _restic_forget_container = _restic_container | {
     name = _restic_container.name + "-forget"
     args = _restic_common_args + [
         "forget"
+        if _input.restic.group_by:
+            "--group-by=" + _input.restic.group_by
         if _input.restic.keep_last:
             "--keep-last=" + str(_input.restic.keep_last)
         if _input.restic.keep_hourly:
