@@ -8,6 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: docker://kcllang/kcl
+      - uses: docker://kcllang/kcl:v0.10.0
         with:
           args: kcl lint .

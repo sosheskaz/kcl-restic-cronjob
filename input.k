@@ -63,6 +63,7 @@ schema ResticOptions:
     repo: str
     compression?: str
     # check opts
+    read_data: bool = False
     extra_check_args: [str] = []
     # backup opts
     # no_scan makes sense in most programmatic use-cases, so it's enabled by default.

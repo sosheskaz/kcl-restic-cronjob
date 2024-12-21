@@ -29,7 +29,12 @@ _restic_container = corev1.Container {
 
 _restic_check_container = _restic_container | {
     name = _restic_container.name + "-check"
-    args = _restic_common_args + ["check"]
+    args = _restic_common_args + [
+        "check"
+        if _input.restic.read_data:
+            "--read-data"
+        *_input.restic.extra_check_args
+    ]
 }
 _restic_backup_container = _restic_container | {
     name = _restic_container.name + "-backup"
