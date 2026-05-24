@@ -90,3 +90,6 @@ schema ResticOptions:
     # This can be handy for safety
     forget_dry_run: bool = False
     extra_forget_args: [str] = []
+    # Resource requests/limits for restic containers. No limits are set by default.
+    # When requests.memory is set, GOMEMLIMIT is automatically set to match via the Downward API.
+    resources?: corev1.ResourceRequirements
