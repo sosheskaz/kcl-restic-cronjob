@@ -24,6 +24,18 @@ _restic_container = corev1.Container {
     name: "restic"
     image: _input.restic.image
     envFrom: [_backupEnvSource]
+    if _input.restic.resources?.requests?.memory:
+        env: [{
+            name: "GOMEMLIMIT"
+            valueFrom: {
+                resourceFieldRef: {
+                    resource: "requests.memory"
+                    divisor: "1"
+                }
+            }
+        }]
+    if _input.restic.resources:
+        resources: _input.restic.resources
     volumeMounts: _restic_volume_mounts
 }
 
