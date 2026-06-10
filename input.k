@@ -32,6 +32,10 @@ schema Input:
     # hooks that run after the backup
     post_backup_hooks: [corev1.Container] = []
     node_selector?: {str:str}
+    # When set, adds pod anti-affinity to prevent concurrent execution with
+    # other jobs that share the same value. Uses kubernetes.io/os as the
+    # topology key for cluster-wide (unbounded) scope.
+    restic_family?: str
 
 schema CacheOptions:
     # Size of the cache PVC in Gi

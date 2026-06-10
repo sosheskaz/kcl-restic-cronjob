@@ -58,6 +58,19 @@ cj = batchv1.CronJob {
                             }
                         ] + _input.volumes
                         nodeSelector: _input.node_selector
+                        if _input.restic_family:
+                            affinity: {
+                                podAntiAffinity: {
+                                    requiredDuringSchedulingIgnoredDuringExecution: [{
+                                        labelSelector: {
+                                            matchLabels: {
+                                                "restic-family": _input.restic_family
+                                            }
+                                        }
+                                        topologyKey: "kubernetes.io/os"
+                                    }]
+                                }
+                            }
                     }
                 }
             }

@@ -51,6 +51,7 @@
 |**pre_backup_hooks** `required`|[[Container](#container)]||[]|
 |**pre_exec_hooks** `required`|[[Container](#container)]||[]|
 |**restic** `required`|[ResticOptions](#resticoptions)|||
+|**restic_family**|str|||
 |**service_account**|str|||
 |**volume_mounts** `required`|[[VolumeMount](#volumemount)]||[]|
 |**volumes** `required`|[[Volume](#volume)]||[]|
