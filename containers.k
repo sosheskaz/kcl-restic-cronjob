@@ -14,7 +14,7 @@ _secret_volume = corev1.Volume {
     }
 }
 
-_restic_common_args: [str] = ["--cache-dir=" + _cache_volume_mount.mountPath]
+_restic_common_args: [str] = ["--cache-dir=" + _cache_volume_mount.mountPath] + (["--limit-upload=" + str(_input.restic.bandwidth_limit), "--limit-download=" + str(_input.restic.bandwidth_limit)] if _input.restic.bandwidth_limit else [])
 _image: str = _input.restic.image
 _restic_volume_mounts: [corev1.VolumeMount] = [
     _cache_volume_mount

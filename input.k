@@ -62,6 +62,9 @@ schema ResticOptions:
     repo_pass_secret_file: str = "repo-password"
     repo: str
     compression?: str
+    # If set, applies --limit-upload=N --limit-download=N to all restic operations (KiB/s).
+    # 50 Mbps ≈ 6250 KiB/s.
+    bandwidth_limit?: int
     # check opts
     read_data: bool = False
     extra_check_args: [str] = []
