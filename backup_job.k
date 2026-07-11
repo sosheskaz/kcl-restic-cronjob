@@ -26,10 +26,9 @@ cj = batchv1.CronJob {
         name: _input.name + "-restic"
         namespace: _input.namespace
         labels: _labels
-        if _input.cronjob.ttl_seconds_after_finished != None:
-            annotations: {
-                "ignore-check.kube-linter.io/job-ttl-seconds-after-finished": "Intentional: ttlSecondsAfterFinished is the primary reaper for finished restic backup Jobs; successful/failedJobsHistoryLimit remain as a secondary count-based bound, not a hard cap."
-            }
+        annotations: {
+            "ignore-check.kube-linter.io/job-ttl-seconds-after-finished": "Intentional: ttlSecondsAfterFinished is the primary reaper for finished restic backup Jobs; successful/failedJobsHistoryLimit remain as a secondary count-based bound, not a hard cap."
+        }
     }
     spec: {
         schedule: _input.cronjob.schedule
