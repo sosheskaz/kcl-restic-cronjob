@@ -37,6 +37,7 @@ cj = batchv1.CronJob {
         successfulJobsHistoryLimit: _input.cronjob.successful_jobs_history_limit
         jobTemplate: {
             spec: {
+                ttlSecondsAfterFinished: _input.cronjob.ttl_seconds_after_finished
                 template: {
                     metadata: {labels: _labels}
                     spec: {

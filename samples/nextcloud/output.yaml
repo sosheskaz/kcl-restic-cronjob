@@ -209,5 +209,6 @@ spec:
           - name: nextcloud-custom-apps
             persistentVolumeClaim:
               claimName: nextcloud-custom-apps
+      ttlSecondsAfterFinished: 259200
   schedule: '46 2 * * *'
   timeZone: America/Chicago

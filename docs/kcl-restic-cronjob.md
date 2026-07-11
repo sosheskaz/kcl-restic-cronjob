@@ -29,6 +29,7 @@
 |**successful_jobs_history_limit**|int|||
 |**suspend**|bool|||
 |**timezone**|str|||
+|**ttl_seconds_after_finished**|int||259200|
 ### Input
 
 #### Attributes

@@ -130,5 +130,6 @@ spec:
               path: /
               type: Directory
             name: host
+      ttlSecondsAfterFinished: 259200
   schedule: '14 1 * * *'
   timeZone: America/Chicago
