@@ -33,6 +33,8 @@ spec:
 apiVersion: batch/v1
 kind: CronJob
 metadata:
+  annotations:
+    ignore-check.kube-linter.io/job-ttl-seconds-after-finished: 'Intentional: ttlSecondsAfterFinished is the primary reaper for finished restic backup Jobs; successful/failedJobsHistoryLimit remain as a secondary count-based bound, not a hard cap.'
   labels:
     app.kubernetes.io/name: nextcloud-backup
     app.kubernetes.io/component: restic
