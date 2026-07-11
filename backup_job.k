@@ -26,6 +26,9 @@ cj = batchv1.CronJob {
         name: _input.name + "-restic"
         namespace: _input.namespace
         labels: _labels
+        annotations: {
+            "ignore-check.kube-linter.io/job-ttl-seconds-after-finished": "Intentional: ttlSecondsAfterFinished is the primary reaper for finished restic backup Jobs; successful/failedJobsHistoryLimit remain as a secondary count-based bound, not a hard cap."
+        }
     }
     spec: {
         schedule: _input.cronjob.schedule
@@ -37,6 +40,7 @@ cj = batchv1.CronJob {
         successfulJobsHistoryLimit: _input.cronjob.successful_jobs_history_limit
         jobTemplate: {
             spec: {
+                ttlSecondsAfterFinished: _input.cronjob.ttl_seconds_after_finished
                 template: {
                     metadata: {labels: _labels}
                     spec: {

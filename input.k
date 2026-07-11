@@ -54,6 +54,13 @@ schema CronjobSettings:
     starting_deadline_seconds?: int
     failed_jobs_history_limit?: int
     successful_jobs_history_limit?: int
+    # Seconds after a Job (Complete or Failed) finishes before Kubernetes auto-deletes it and its Pods.
+    # Bounds retention regardless of failed/successful_jobs_history_limit. There is no way to disable
+    # this: KCL reapplies the default for any None value (omitted or explicit `null`), so this field
+    # always resolves to a concrete int. Consumers needing longer retention should override with a
+    # larger value proportional to their schedule (see time-machine-verify in thousand-sunny for an
+    # example of a monthly job overriding this).
+    ttl_seconds_after_finished: int = 259200  # 3 days
 
 schema ResticOptions:
     # global opts
