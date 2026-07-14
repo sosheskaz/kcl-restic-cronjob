@@ -1,0 +1,137 @@
+apiVersion: v1
+data:
+  RESTIC_REPOSITORY_FILE: /secret/repository
+  RESTIC_PASSWORD_FILE: /secret/repo-password
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: repo-secret-backup
+    app.kubernetes.io/component: restic
+  name: repo-secret-backup-env
+  namespace: system-backup
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app.kubernetes.io/name: repo-secret-backup
+    app.kubernetes.io/component: restic
+  name: repo-secret-backup-restic-cache
+  namespace: system-backup
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: '5Gi'
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  annotations:
+    ignore-check.kube-linter.io/job-ttl-seconds-after-finished: 'Intentional: ttlSecondsAfterFinished is the primary reaper for finished restic backup Jobs; successful/failedJobsHistoryLimit remain as a secondary count-based bound, not a hard cap.'
+  labels:
+    app.kubernetes.io/name: repo-secret-backup
+    app.kubernetes.io/component: restic
+  name: repo-secret-backup-restic
+  namespace: system-backup
+spec:
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: repo-secret-backup
+            app.kubernetes.io/component: restic
+        spec:
+          containers:
+          - args:
+            - '--cache-dir=/cache'
+            - prune
+            envFrom:
+            - configMapRef:
+                name: repo-secret-backup-env
+            image: docker.io/restic/restic:latest
+            name: '3-restic-prune'
+            volumeMounts:
+            - mountPath: /cache
+              name: cache
+            - mountPath: /secret
+              name: secret
+            - mountPath: /host
+              name: host
+              readOnly: true
+          initContainers:
+          - args:
+            - '--cache-dir=/cache'
+            - check
+            envFrom:
+            - configMapRef:
+                name: repo-secret-backup-env
+            image: docker.io/restic/restic:latest
+            name: '0-restic-check'
+            volumeMounts:
+            - mountPath: /cache
+              name: cache
+            - mountPath: /secret
+              name: secret
+            - mountPath: /host
+              name: host
+              readOnly: true
+          - args:
+            - '--cache-dir=/cache'
+            - backup
+            - '--no-scan'
+            - '--one-file-system'
+            - /backup
+            envFrom:
+            - configMapRef:
+                name: repo-secret-backup-env
+            image: docker.io/restic/restic:latest
+            name: '1-restic-backup'
+            volumeMounts:
+            - mountPath: /cache
+              name: cache
+            - mountPath: /secret
+              name: secret
+            - mountPath: /host
+              name: host
+              readOnly: true
+          - args:
+            - '--cache-dir=/cache'
+            - forget
+            - '--keep-daily=7'
+            - '--keep-weekly=5'
+            - '--keep-monthly=12'
+            envFrom:
+            - configMapRef:
+                name: repo-secret-backup-env
+            image: docker.io/restic/restic:latest
+            name: '2-restic-forget'
+            volumeMounts:
+            - mountPath: /cache
+              name: cache
+            - mountPath: /secret
+              name: secret
+            - mountPath: /host
+              name: host
+              readOnly: true
+          nodeSelector:
+            my_node_selector: my_node_selector_value
+          restartPolicy: Never
+          volumes:
+          - name: cache
+            persistentVolumeClaim:
+              claimName: repo-secret-backup-restic-cache
+          - name: secret
+            secret:
+              optional: true
+              secretName: repo-secret-restic
+          - hostPath:
+              path: /
+              type: Directory
+            name: host
+      ttlSecondsAfterFinished: 259200
+  schedule: '14 1 * * *'
+  timeZone: America/Chicago
