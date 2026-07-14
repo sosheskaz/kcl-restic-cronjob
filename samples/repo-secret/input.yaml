@@ -1,0 +1,29 @@
+---
+name: repo-secret-backup
+namespace: system-backup
+cronjob:
+  schedule: "14 1 * * *"
+  timezone: "America/Chicago"
+restic:
+  # No plaintext `repo:` — the repository URL is read from the mounted secret
+  # instead, via RESTIC_REPOSITORY_FILE. The secret named below must carry both
+  # the password key (repo-password) and the repository-URL key (repository).
+  repo_pass_secret: repo-secret-restic
+  repo_secret_file: repository
+
+  one_file_system: true
+
+  keep_daily: 7
+  keep_weekly: 5
+  keep_monthly: 12
+volumes:
+  - name: host
+    hostPath:
+      path: /
+      type: Directory
+volume_mounts:
+  - name: host
+    mountPath: /host
+    readOnly: true
+node_selector:
+  my_node_selector: my_node_selector_value

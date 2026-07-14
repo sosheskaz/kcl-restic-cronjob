@@ -10,7 +10,10 @@ backup_env = corev1.ConfigMap {
         labels: _labels
     }
     data: {
-        "RESTIC_REPOSITORY": _input.restic.repo
+        if _input.restic.repo:
+            "RESTIC_REPOSITORY": _input.restic.repo
+        if _input.restic.repo_secret_file:
+            "RESTIC_REPOSITORY_FILE": _secret_volume_mount.mountPath + "/" + _input.restic.repo_secret_file
         "RESTIC_HOST": _input.restic.host if _input.restic.host != None else _input.name
         if _input.restic.read_concurrency:
             "RESTIC_READ_CONCURRENCY": str(_input.restic.read_concurrency)

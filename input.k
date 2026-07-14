@@ -71,7 +71,10 @@ schema ResticOptions:
     paths: [str] = ["/backup"]
     repo_pass_secret?: str
     repo_pass_secret_file: str = "repo-password"
-    repo: str
+    repo?: str
+    # Key inside the mounted secret (/secret, named by repo_pass_secret) holding the
+    # repository URL, e.g. "repository". Reuses the same secret/volume as the password.
+    repo_secret_file?: str
     compression?: str
     # If set, applies --limit-upload=N --limit-download=N to all restic operations (KiB/s).
     # 50 Mbps ≈ 6250 KiB/s.
@@ -107,3 +110,7 @@ schema ResticOptions:
     # Resource requests/limits for restic containers. No limits are set by default.
     # When requests.memory is set, GOMEMLIMIT is automatically set to match via the Downward API.
     resources?: corev1.ResourceRequirements
+
+    check:
+        repo or repo_secret_file, "ResticOptions: set either repo or repo_secret_file"
+        not (repo and repo_secret_file), "ResticOptions: repo and repo_secret_file are mutually exclusive"
